@@ -1,0 +1,334 @@
+<?php
+// Démarrage de session pour que les appels PHP fonctionnent
+session_start();
+?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediRDV — Rendez-vous Médicaux en Ligne</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════════════════════════ -->
+<nav class="navbar">
+  <div class="navbar-brand">Medi<span>RDV</span></div>
+  <div class="navbar-menu" id="navMenu">
+    <button class="btn btn-ghost" onclick="openModal('loginModal')">Connexion</button>
+    <button class="btn btn-accent" onclick="openModal('registerModal')">S'inscrire</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════════════ -->
+<section id="heroSection">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1>Votre santé,<br>simplifiée <em>en ligne</em></h1>
+      <p>Trouvez le médecin idéal, consultez les créneaux disponibles et prenez rendez-vous en quelques clics — 24h/24, 7j/7.</p>
+      <div class="hero-btns">
+        <button class="btn btn-accent btn-lg" onclick="openModal('registerModal')">Prendre rendez-vous</button>
+        <button class="btn btn-ghost btn-lg" onclick="openModal('loginModal')">Se connecter</button>
+      </div>
+    </div>
+    <div class="hero-features">
+      <div class="hero-feat">
+        <div class="hf-icon">🩺</div>
+        <div class="hf-text"><h4>+50 Spécialistes</h4><p>Cardiologie, Pédiatrie, Dermato, Gynéco et plus</p></div>
+      </div>
+      <div class="hero-feat">
+        <div class="hf-icon">📅</div>
+        <div class="hf-text"><h4>Réservation Instantanée</h4><p>Choisissez votre créneau en temps réel</p></div>
+      </div>
+      <div class="hero-feat">
+        <div class="hf-icon">🔔</div>
+        <div class="hf-text"><h4>Confirmations Rapides</h4><p>Le médecin confirme directement votre rendez-vous</p></div>
+      </div>
+      <div class="hero-feat">
+        <div class="hf-icon">🔒</div>
+        <div class="hf-text"><h4>Données Sécurisées</h4><p>Vos informations médicales restent confidentielles</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PATIENT DASHBOARD
+════════════════════════════════════════════════════════════ -->
+<section id="patientDash" class="hidden">
+  <div class="page">
+
+    <div class="dash-header">
+      <div>
+        <h2 id="patientName"></h2>
+        <p>Trouvez et réservez votre prochain rendez-vous médical</p>
+      </div>
+      <button class="btn btn-outline" onclick="logout()">Déconnexion</button>
+    </div>
+
+    <!-- PATIENT TABS -->
+    <div class="tabs patient-tabs">
+      <button class="tab active" data-target="pSearchTab" onclick="activateTab('patient-tabs','pSearchTab')">🔍 Trouver un médecin</button>
+      <button class="tab" data-target="pApptTab" onclick="activateTab('patient-tabs','pApptTab')">📋 Mes Rendez-vous</button>
+    </div>
+
+    <!-- SEARCH TAB -->
+    <div id="pSearchTab" class="tab-pane patient-tabs-pane active">
+      <div class="search-bar">
+        <h3>Rechercher un médecin</h3>
+        <div class="search-inputs">
+          <input type="text" id="searchName" placeholder="🔍 Nom ou spécialité..." oninput="filterDoctors()">
+          <select id="searchSpec" onchange="filterDoctors()">
+            <option value="">Toutes les spécialités</option>
+            <option>Généraliste</option>
+            <option>Cardiologue</option>
+            <option>Dermatologue</option>
+            <option>Pédiatre</option>
+            <option>Ophtalmologue</option>
+            <option>Gynécologue</option>
+            <option>Neurologue</option>
+            <option>Orthopédiste</option>
+          </select>
+          <select id="searchCity" onchange="filterDoctors()">
+            <option value="">Toutes les villes</option>
+            <option>Tunis</option>
+            <option>Sfax</option>
+            <option>Sousse</option>
+            <option>Bizerte</option>
+          </select>
+        </div>
+      </div>
+      <div id="doctorsList" class="doctors-grid"></div>
+    </div>
+
+    <!-- MY APPOINTMENTS TAB -->
+    <div id="pApptTab" class="tab-pane patient-tabs-pane">
+      <div id="myApptsList"></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DOCTOR DASHBOARD
+════════════════════════════════════════════════════════════ -->
+<section id="doctorDash" class="hidden">
+  <div class="page">
+
+    <div class="dash-header">
+      <div>
+        <h2 id="doctorName"></h2>
+        <p id="doctorSub"></p>
+      </div>
+      <button class="btn btn-outline" onclick="logout()">Déconnexion</button>
+    </div>
+
+    <div id="statsGrid" class="stats-grid"></div>
+
+    <!-- DOCTOR TABS -->
+    <div class="tabs doctor-tabs">
+      <button class="tab active" data-target="dApptTab" onclick="activateTab('doctor-tabs','dApptTab')">📅 Rendez-vous</button>
+      <button class="tab" data-target="dProfileTab" onclick="activateTab('doctor-tabs','dProfileTab')">👤 Mon Profil</button>
+    </div>
+
+    <!-- APPOINTMENTS TAB -->
+    <div id="dApptTab" class="tab-pane doctor-tabs-pane active">
+      <div class="tabs" style="margin-bottom:1rem;border:none;background:transparent">
+        <button class="tab active" onclick="setApptFilter('all',this)">Tous</button>
+        <button class="tab" onclick="setApptFilter('en_attente',this)">⏳ En attente</button>
+        <button class="tab" onclick="setApptFilter('confirme',this)">✅ Confirmés</button>
+        <button class="tab" onclick="setApptFilter('termine',this)">🏁 Terminés</button>
+      </div>
+      <div id="doctorApptsList"></div>
+    </div>
+
+    <!-- PROFILE TAB -->
+    <div id="dProfileTab" class="tab-pane doctor-tabs-pane">
+      <div class="card" style="max-width:580px">
+        <h3 style="color:var(--primary);margin-bottom:1.2rem">Informations du profil</h3>
+        <div id="doctorProfileInfo"></div>
+        <div class="mt-3">
+          <h4 style="margin-bottom:.8rem;font-size:.95rem">Créneaux horaires (Lun–Ven)</h4>
+          <p class="text-muted mb-2" style="font-size:13px">Disponibilités standard, modifiables depuis le panneau d'administration.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span class="badge badge-blue">08:00</span><span class="badge badge-blue">08:30</span>
+            <span class="badge badge-blue">09:00</span><span class="badge badge-blue">09:30</span>
+            <span class="badge badge-blue">10:00</span><span class="badge badge-blue">10:30</span>
+            <span class="badge badge-blue">11:00</span><span class="badge badge-blue">11:30</span>
+            <span class="badge badge-blue">14:00</span><span class="badge badge-blue">14:30</span>
+            <span class="badge badge-blue">15:00</span><span class="badge badge-blue">15:30</span>
+            <span class="badge badge-blue">16:00</span><span class="badge badge-blue">16:30</span>
+            <span class="badge badge-blue">17:00</span><span class="badge badge-blue">17:30</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — CONNEXION
+════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="loginModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    <h2>Connexion</h2>
+    <p class="modal-sub">Accédez à votre espace personnel</p>
+    <div class="role-tabs">
+      <div class="role-tab active" id="lRolePatient" onclick="setLoginRole('patient')">👤 Patient</div>
+      <div class="role-tab" id="lRoleDoctor" onclick="setLoginRole('medecin')">🩺 Médecin</div>
+    </div>
+    <div id="loginError" class="form-error hidden"></div>
+    <div class="form-group">
+      <label>Email *</label>
+      <input type="email" id="loginEmail" placeholder="votre@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe *</label>
+      <input type="password" id="loginPwd" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-block btn-lg" id="btnLogin" onclick="doLogin()">Se connecter</button>
+    <div class="switch-link">
+      Pas de compte ? <a onclick="switchModal('loginModal','registerModal')">S'inscrire gratuitement</a>
+    </div>
+    <div style="margin-top:1rem;padding:10px;background:#F7F9FC;border-radius:8px;font-size:12px;color:var(--muted)">
+      <strong>Démo patient :</strong> ahmed@demo.com / demo1234<br>
+      <strong>Démo médecin :</strong> sarah@demo.com / demo1234
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — INSCRIPTION
+════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="registerModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+    <h2>Créer un compte</h2>
+    <p class="modal-sub">Rejoignez la plateforme MediRDV</p>
+    <div class="role-tabs">
+      <div class="role-tab active" id="rRolePatient" onclick="setRegRole('patient')">👤 Patient</div>
+      <div class="role-tab" id="rRoleDoctor"  onclick="setRegRole('medecin')">🩺 Médecin</div>
+    </div>
+    <div id="regError" class="form-error hidden"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Prénom *</label><input type="text" id="rPrenom" placeholder="Votre prénom"></div>
+      <div class="form-group"><label>Nom *</label><input type="text" id="rNom" placeholder="Votre nom"></div>
+    </div>
+    <div class="form-group"><label>Email *</label><input type="email" id="rEmail" placeholder="votre@email.com"></div>
+    <div class="form-group"><label>Téléphone</label><input type="tel" id="rPhone" placeholder="+216 XX XXX XXX"></div>
+    <div class="form-group"><label>Mot de passe * (min. 6 caractères)</label><input type="password" id="rPwd" placeholder="••••••••"></div>
+
+    <!-- CHAMPS MÉDECIN UNIQUEMENT -->
+    <div id="doctorRegFields" class="hidden">
+      <hr style="border:none;border-top:1px solid var(--border);margin:0.8rem 0">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:.8rem">Informations professionnelles</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Spécialité *</label>
+          <select id="rSpec">
+            <option value="">Choisir...</option>
+            <option>Généraliste</option><option>Cardiologue</option>
+            <option>Dermatologue</option><option>Pédiatre</option>
+            <option>Ophtalmologue</option><option>Gynécologue</option>
+            <option>Neurologue</option><option>Orthopédiste</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ville *</label>
+          <select id="rVille">
+            <option value="">Choisir...</option>
+            <option>Tunis</option><option>Sfax</option>
+            <option>Sousse</option><option>Bizerte</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Adresse du cabinet *</label><input type="text" id="rAdresse" placeholder="Adresse complète"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Tarif (TND) *</label><input type="number" id="rTarif" placeholder="ex: 60" min="0"></div>
+        <div class="form-group"><label>Description</label><input type="text" id="rDesc" placeholder="Courte bio..."></div>
+      </div>
+    </div>
+
+    <button class="btn btn-accent btn-block btn-lg" id="btnRegister" onclick="doRegister()">Créer mon compte</button>
+    <div class="switch-link">Déjà inscrit ? <a onclick="switchModal('registerModal','loginModal')">Se connecter</a></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — RÉSERVATION
+════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="bookingModal">
+  <div class="modal modal-lg">
+    <button class="modal-close" onclick="closeModal('bookingModal')">✕</button>
+    <h2 id="bookingDocName">Prendre rendez-vous</h2>
+    <p class="modal-sub" id="bookingDocInfo"></p>
+
+    <div class="booking-grid">
+      <!-- CALENDRIER -->
+      <div>
+        <div class="cal-nav">
+          <button class="cal-arrow" onclick="changeMonth(-1)">‹</button>
+          <span class="cal-label" id="calLabel"></span>
+          <button class="cal-arrow" onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="cal-week">
+          <div class="cal-wday">Lu</div><div class="cal-wday">Ma</div>
+          <div class="cal-wday">Me</div><div class="cal-wday">Je</div>
+          <div class="cal-wday">Ve</div><div class="cal-wday">Sa</div>
+          <div class="cal-wday">Di</div>
+        </div>
+        <div class="cal-body" id="calBody"></div>
+      </div>
+
+      <!-- CRÉNEAUX -->
+      <div class="slots-wrap">
+        <h4>Créneaux disponibles</h4>
+        <div class="slots-grid" id="slotsGrid">
+          <p class="text-muted" style="font-size:13px;grid-column:span 3">Sélectionnez une date</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIRMATION -->
+    <div class="booking-confirm hidden" id="bookingConfirm">
+      <p>✓ Rendez-vous sélectionné : <span id="bookingSummary"></span></p>
+      <div class="form-group" style="margin-top:8px">
+        <label>Motif de consultation (optionnel)</label>
+        <input type="text" id="bookingReason" placeholder="Ex : consultation générale, douleur, suivi...">
+      </div>
+      <button class="btn btn-accent btn-block btn-lg" id="btnConfirmBooking" onclick="confirmBooking()">
+        ✓ Confirmer le rendez-vous
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — NOTES MÉDECIN
+════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="notesModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('notesModal')">✕</button>
+    <h2>Notes du médecin</h2>
+    <p class="modal-sub">Ces notes sont visibles par le patient dans son espace</p>
+    <div class="form-group">
+      <label>Notes / Observations</label>
+      <textarea id="notesText" rows="5" placeholder="Observations, prescriptions, recommandations..."></textarea>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="saveNotes()">💾 Enregistrer</button>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
