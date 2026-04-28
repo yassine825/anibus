@@ -1,0 +1,10 @@
+# MediRDV — Configuration Apache
+
+DirectoryIndex index.php index.html
+
+Options -Indexes
+
+# Optionnel : activer le module rewrite si nécessaire
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+</IfModule>
